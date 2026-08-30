@@ -56,6 +56,32 @@ local function launch(entry)
     end)
 end
 
+-- MouseButton1Click alone is unreliable here, so every part of the card fires
+local function arm(element, action)
+    if type(element) ~= "table" then
+        return
+    end
+    local last = 0
+    for _, part in ipairs({ element.button, element.card, element.hitbox }) do
+        if typeof(part) == "Instance" then
+            pcall(function()
+                part.Active = true
+                part.InputBegan:Connect(function(input)
+                    if input.UserInputType ~= Enum.UserInputType.MouseButton1
+                        and input.UserInputType ~= Enum.UserInputType.Touch then
+                        return
+                    end
+                    if os.clock() - last < 0.5 then
+                        return
+                    end
+                    last = os.clock()
+                    action()
+                end)
+            end)
+        end
+    end
+end
+
 local function matchPlace(placeId)
     for _, entry in ipairs(CATALOG) do
         for _, id in ipairs(entry.Places) do
@@ -76,10 +102,14 @@ if supported then
     return
 end
 
-if _G.PulseHubPicker then
-    return
+-- closing the window with the header cross used to leave the guard set, which
+-- made every later run a silent no-op, so the old menu is torn down instead
+if type(_G.PulseHubLoader) == "table" then
+    pcall(function()
+        _G.PulseHubLoader.Window:Destroy()
+    end)
 end
-_G.PulseHubPicker = true
+_G.PulseHubLoader = {}
 
 local Slate = loadstring(game:HttpGet(SLATE_URL), "@Slate")()
 
@@ -119,6 +149,8 @@ pcall(function()
     end
 end)
 
+_G.PulseHubLoader.Window = Window
+
 local Tab = Window:CreateTab({ Name = "Scripts", Icon = "layout-grid" })
 
 local placeName = "this game"
@@ -133,9 +165,7 @@ do
     local notice = Tab:CreateSection({ Name = "Unsupported game" })
     notice:Paragraph({
         Name = "No script for " .. placeName,
-        Description = "Pulse Hub has nothing built for this place, so it opened the picker instead. "
-            .. "Anything you launch from here runs outside the game it was written for - features may "
-            .. "misbehave, do nothing, or stop working without warning.",
+        Description = "Every script below reads its own game data on start and will stall here.",
     })
 end
 
@@ -145,8 +175,55 @@ do
 
     for _, entry in ipairs(CATALOG) do
         if entry.Listed then
-            local card
-            card = grid:Invite({
+            local start = function()
+                Slate:Notify({
+                    Title = "Pulse Hub",
+                    Description = "Starting " .. entry.Name,
+                    Icon = "play",
+                    Duration = 5,
+                })
+                task.spawn(function()
+                    -- a script written for another game parks forever on a
+                    -- WaitForChild for data that place never replicates, so a
+                    -- thread that never returns is reported as such
+                    local finished, ok, err = false, nil, nil
+                    task.spawn(function()
+                        ok, err = launch(entry)
+                        finished = true
+                    end)
+                    local waited = 0
+                    while not finished and waited < 6 do
+                        task.wait(0.25)
+                        waited += 0.25
+                    end
+                    if not finished then
+                        Slate:Notify({
+                            Title = "Pulse Hub",
+                            Description = entry.Name .. " is stuck waiting for its own game data",
+                            Icon = "triangle-alert",
+                            Tone = "Warning",
+                            Duration = 10,
+                        })
+                    elseif not ok then
+                        Slate:Notify({
+                            Title = "Pulse Hub",
+                            Description = entry.Name .. " failed: " .. tostring(err),
+                            Icon = "circle-alert",
+                            Tone = "Danger",
+                            Duration = 10,
+                        })
+                    else
+                        Slate:Notify({
+                            Title = "Pulse Hub",
+                            Description = entry.Name .. " started",
+                            Icon = "circle-check",
+                            Tone = "Success",
+                            Duration = 8,
+                        })
+                    end
+                end)
+            end
+            local card = grid:Invite({
                 Name = entry.Name,
                 Icon = thumb(entry.Places[1]),
                 Stats = {
@@ -159,26 +236,9 @@ do
                 ButtonText = "Run",
                 ButtonColor = entry.Tone,
                 CopiedText = "Starting",
-                Callback = function()
-                    Slate:Notify({
-                        Title = "Pulse Hub",
-                        Description = "Starting " .. entry.Name,
-                        Icon = "play",
-                        Duration = 5,
-                    })
-                    task.spawn(function()
-                        local ok, err = launch(entry)
-                        Slate:Notify({
-                            Title = "Pulse Hub",
-                            Description = ok and (entry.Name .. " loaded in unsupported mode")
-                                or (entry.Name .. " failed: " .. tostring(err)),
-                            Icon = ok and "circle-check" or "circle-alert",
-                            Tone = ok and "Success" or "Danger",
-                            Duration = 8,
-                        })
-                    end)
-                end,
+                Callback = start,
             })
+            arm(card, start)
         end
     end
 end
@@ -192,7 +252,7 @@ do
             pcall(function()
                 Window:Destroy()
             end)
-            _G.PulseHubPicker = nil
+            _G.PulseHubLoader = nil
         end,
     })
 end
