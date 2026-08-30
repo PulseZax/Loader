@@ -56,7 +56,6 @@ local function launch(entry)
     end)
 end
 
--- MouseButton1Click alone is unreliable here, so every part of the card fires
 local function arm(element, action)
     if type(element) ~= "table" then
         return
@@ -102,8 +101,6 @@ if supported then
     return
 end
 
--- closing the window with the header cross used to leave the guard set, which
--- made every later run a silent no-op, so the old menu is torn down instead
 if type(_G.PulseHubLoader) == "table" then
     pcall(function()
         _G.PulseHubLoader.Window:Destroy()
@@ -183,9 +180,6 @@ do
                     Duration = 5,
                 })
                 task.spawn(function()
-                    -- a script written for another game parks forever on a
-                    -- WaitForChild for data that place never replicates, so a
-                    -- thread that never returns is reported as such
                     local finished, ok, err = false, nil, nil
                     task.spawn(function()
                         ok, err = launch(entry)
