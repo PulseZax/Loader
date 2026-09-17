@@ -1,4 +1,4 @@
---Привет если ты это прочитал то тебя взломали, что бы твои данные не слили в интернет скинь мне фотки трусов своей мамы мне в телеграмм @mausyo
+-- Made by pulsehub.gg / discord.gg/pulsezone
 local SLATE_URL = "https://raw.githubusercontent.com/PulseZax/Slate/refs/heads/main/.lua"
 
 local CATALOG = {
@@ -6,6 +6,7 @@ local CATALOG = {
         Key = "mm2",
         Name = "Murder Mystery 2",
         Places = { 142823291 },
+        Universe = 66654135,
         Loader = "https://api.luarmor.net/files/v4/loaders/5857a6cfae3b902eb3c2dff7cdbf173b.lua",
         Listed = true,
         Tone = Color3.fromRGB(214, 68, 88),
@@ -14,6 +15,7 @@ local CATALOG = {
         Key = "speed",
         Name = "+1 Speed Keyboard Escape",
         Places = { 95082159892680, 118941584817777, 93411036959889 },
+        Universe = 9584852943,
         Loader = "https://api.luarmor.net/files/v4/loaders/385c6d8937bfc4ef284dc8c27b50e1c5.lua",
         Listed = false,
         Tone = Color3.fromRGB(236, 176, 72),
@@ -22,6 +24,7 @@ local CATALOG = {
         Key = "gag",
         Name = "Grow A Garden 2",
         Places = { 97598239454123 },
+        Universe = 10200395747,
         Loader = "https://api.luarmor.net/files/v4/loaders/abd74919679fad90b027ed4e177cea66.lua",
         Listed = true,
         Tone = Color3.fromRGB(76, 175, 92),
@@ -30,6 +33,7 @@ local CATALOG = {
         Key = "sandiego",
         Name = "San Diego Border Roleplay",
         Places = { 136020512003847 },
+        Universe = 9855761734,
         Loader = "https://api.luarmor.net/files/v4/loaders/16e8365b42517b9a82b7e0a9f4120d3c.lua",
         Listed = true,
         Tone = Color3.fromRGB(72, 132, 220),
@@ -38,9 +42,19 @@ local CATALOG = {
         Key = "stealegg",
         Name = "Steal An Egg",
         Places = { 107778070777162 },
+        Universe = 10563114921,
         Loader = "https://api.luarmor.net/files/v4/loaders/9eaf6021130040db2646aa9b094427ef.lua",
         Listed = true,
         Tone = Color3.fromRGB(226, 168, 62),
+    },
+    {
+        Key = "rivals",
+        Name = "RIVALS",
+        Places = { 17625359962, 71874690745115, 117398147513099, 129604661913557, 133215910299950, 18126510175 },
+        Universe = 6035872082,
+        Loader = "https://api.luarmor.net/files/v4/loaders/8ea20a4f7e9fb8343eec902723cf66f6.lua",
+        Listed = true,
+        Tone = Color3.fromRGB(90, 169, 255),
     },
 }
 
@@ -81,7 +95,12 @@ local function arm(element, action)
     end
 end
 
-local function matchPlace(placeId)
+local function matchPlace(placeId, universeId)
+    for _, entry in ipairs(CATALOG) do
+        if entry.Universe and entry.Universe == universeId then
+            return entry
+        end
+    end
     for _, entry in ipairs(CATALOG) do
         for _, id in ipairs(entry.Places) do
             if id == placeId then
@@ -92,7 +111,7 @@ local function matchPlace(placeId)
     return nil
 end
 
-local supported = matchPlace(game.PlaceId)
+local supported = matchPlace(game.PlaceId, game.GameId)
 if supported then
     local ok, err = launch(supported)
     if not ok then
