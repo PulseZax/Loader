@@ -56,6 +56,15 @@ local CATALOG = {
         Listed = true,
         Tone = Color3.fromRGB(90, 169, 255),
     },
+    {
+        Key = "bloxstrike",
+        Name = "BloxStrike",
+        Places = { 114234929420007, 108194354348181, 135434213652028, 101836176558619 },
+        Universe = 7633926880,
+        Loader = "https://api.luarmor.net/files/v4/loaders/107fbc36b735fcffe3b85e3eb7b84eb5.lua",
+        Listed = true,
+        Tone = Color3.fromRGB(217, 164, 65),
+    },
 }
 
 local Players = game:GetService("Players")
