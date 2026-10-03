@@ -43,7 +43,7 @@ local CATALOG = {
         Name = "Steal An Egg",
         Places = { 107778070777162 },
         Universe = 10563114921,
-        Loader = "https://api.luarmor.net/files/v4/loaders/9eaf6021130040db2646aa9b094427ef.lua",
+        Loader = "https://api.luarmor.net/files/v4/loaders/f8f6c5e226e577900c9f873c822ac49c.lua",
         Listed = true,
         Tone = Color3.fromRGB(226, 168, 62),
     },
