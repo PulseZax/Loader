@@ -1,4 +1,4 @@
--- Made by pulsehub.gg / discord.gg/pulsezone / 222
+-- Made by pulsehub.gg / discord.gg/pulsezone
 local SLATE_URL = "https://raw.githubusercontent.com/PulseZax/Slate/refs/heads/main/.lua"
 
 local CATALOG = {
@@ -73,7 +73,10 @@ local function thumb(placeId)
     return string.format("rbxthumb://type=Asset&id=%d&w=150&h=150", placeId)
 end
 
-local function wipeLuarmorCache(source)
+local LRM_MARK = "pulsehub_lrm_cache.txt"
+local LRM_PENDING = "pulsehub_lrm_pending.txt"
+
+local function luarmorFolders(source)
     local names = {}
     if type(source) == "string" then
         for name in source:gmatch("static_content_[%w_]+") do
@@ -94,30 +97,62 @@ local function wipeLuarmorCache(source)
             end
         end
     end
+    local list = {}
     for name in pairs(names) do
-        pcall(function()
-            if type(isfolder) == "function" and not isfolder(name) then
-                return
-            end
-            if type(listfiles) == "function" and type(delfile) == "function" then
-                local ok, files = pcall(listfiles, name)
-                if ok and type(files) == "table" then
-                    for _, file in ipairs(files) do
-                        pcall(delfile, file)
-                    end
+        list[#list + 1] = name
+    end
+    table.sort(list)
+    return list
+end
+
+local function wipeFolder(name)
+    pcall(function()
+        if type(isfolder) == "function" and not isfolder(name) then
+            return
+        end
+        if type(listfiles) == "function" and type(delfile) == "function" then
+            local ok, files = pcall(listfiles, name)
+            if ok and type(files) == "table" then
+                for _, file in ipairs(files) do
+                    pcall(delfile, file)
                 end
             end
-            if type(delfolder) == "function" then
-                pcall(delfolder, name)
-            end
-        end)
+        end
+        if type(delfolder) == "function" then
+            pcall(delfolder, name)
+        end
+    end)
+end
+
+local function hasFile(path)
+    if type(isfile) == "function" then
+        local ok, res = pcall(isfile, path)
+        return ok and res == true
     end
+    local ok, res = pcall(readfile, path)
+    return ok and type(res) == "string"
+end
+
+local function prepareLuarmorCache(source)
+    local folders = luarmorFolders(source)
+    local mark = "2|" .. table.concat(folders, "|")
+    local okMark, saved = pcall(readfile, LRM_MARK)
+    if hasFile(LRM_PENDING) or not okMark or saved ~= mark then
+        for _, name in ipairs(folders) do
+            wipeFolder(name)
+        end
+        pcall(writefile, LRM_MARK, mark)
+    end
+    pcall(writefile, LRM_PENDING, tostring(os.time()))
+    task.delay(150, function()
+        pcall(delfile, LRM_PENDING)
+    end)
 end
 
 local function launch(entry)
     return pcall(function()
         local source = game:HttpGet(entry.Loader)
-        wipeLuarmorCache(source)
+        prepareLuarmorCache(source)
         return loadstring(source, "@" .. entry.Key)()
     end)
 end
