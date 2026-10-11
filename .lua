@@ -1,4 +1,4 @@
--- Made by pulsehub.gg / discord.gg/pulsezone
+-- Made by pulsehub.gg / discord.gg/pulsezone / 222
 local SLATE_URL = "https://raw.githubusercontent.com/PulseZax/Slate/refs/heads/main/.lua"
 
 local CATALOG = {
@@ -73,9 +73,52 @@ local function thumb(placeId)
     return string.format("rbxthumb://type=Asset&id=%d&w=150&h=150", placeId)
 end
 
+local function wipeLuarmorCache(source)
+    local names = {}
+    if type(source) == "string" then
+        for name in source:gmatch("static_content_[%w_]+") do
+            names[name] = true
+        end
+    end
+    if next(names) == nil and type(listfiles) == "function" then
+        local ok, list = pcall(listfiles, "")
+        if not ok or type(list) ~= "table" then
+            ok, list = pcall(listfiles, ".")
+        end
+        if ok and type(list) == "table" then
+            for _, path in ipairs(list) do
+                local name = tostring(path):gsub("\\", "/"):match("([^/]+)/*$")
+                if name and name:sub(1, 15) == "static_content_" then
+                    names[name] = true
+                end
+            end
+        end
+    end
+    for name in pairs(names) do
+        pcall(function()
+            if type(isfolder) == "function" and not isfolder(name) then
+                return
+            end
+            if type(listfiles) == "function" and type(delfile) == "function" then
+                local ok, files = pcall(listfiles, name)
+                if ok and type(files) == "table" then
+                    for _, file in ipairs(files) do
+                        pcall(delfile, file)
+                    end
+                end
+            end
+            if type(delfolder) == "function" then
+                pcall(delfolder, name)
+            end
+        end)
+    end
+end
+
 local function launch(entry)
     return pcall(function()
-        return loadstring(game:HttpGet(entry.Loader), "@" .. entry.Key)()
+        local source = game:HttpGet(entry.Loader)
+        wipeLuarmorCache(source)
+        return loadstring(source, "@" .. entry.Key)()
     end)
 end
 
