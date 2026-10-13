@@ -65,6 +65,15 @@ local CATALOG = {
         Listed = true,
         Tone = Color3.fromRGB(217, 164, 65),
     },
+    {
+        Key = "kukirin",
+        Name = "Drive A Kukirin!",
+        Places = { 71704434889758 },
+        Universe = 10634461028,
+        Loader = "https://raw.githubusercontent.com/PulseZax/driveakukirin/refs/heads/main/.lua",
+        Listed = true,
+        Tone = Color3.fromRGB(242, 140, 46),
+    },
 }
 
 local Players = game:GetService("Players")
